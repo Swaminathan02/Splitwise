@@ -8,5 +8,9 @@
     "mysql2": "^3.17.4",
     "nodemon": "^3.1.14",
     "sequelize": "^6.37.7"
-  }
+  },
+  "scripts": {
+  "start": "node server.js",
+  "dev": "nodemon server.js"
+}
 }
