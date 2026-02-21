@@ -1,5 +1,6 @@
 const { Sequelize } = require("sequelize");
 require("dotenv").config();
+require("../models");
 
 const sequelize = new Sequelize(
   process.env.DB_NAME,
@@ -21,7 +22,7 @@ const connectDB = async () => {
     console.log("Tables synced");
 
   } catch (error) {
-    console.error("Unable to connect to database:", error.message);
+    console.error("DB Error:", error.message);
     process.exit(1);
   }
 };
