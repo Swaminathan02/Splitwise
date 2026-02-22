@@ -20,23 +20,96 @@ const register = async (req, res) => {
   }
 };
 
+const { loginUser } = require("../services/user.service");
+
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
-    const result = await userService.loginUser(email, password);
+    if (!email || !password) {
+      return res
+        .status(400)
+        .json({ message: "Email and password are required" });
+    }
+    const token = await loginUser(email, password);
+    return res.status(200).json({ token });
+  } catch (error) {
+    return res.status(401).json({ message: error.message });
+  }
+};
 
+const { User } = require("../models");
+
+const getacc = async (req, res) => {
+  try {
+    const user = await User.findByPk(req.user.id, {
+      attributes: ["id", "name", "email", "defaultCurrency"],
+    });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    return res.status(200).json(user);
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+const updateacc = async (req, res) => {
+  try {
+    const { name, email, defaultCurrency } = req.body;
+    const user = await User.findByPk(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    if (name) {
+      user.name = name;
+    }
+    if (email && email !== user.email) {
+      const existingUser = await User.findOne({ where: { email } });
+      if (existingUser) {
+        return res.status(400).json({ message: "Email already exists" });
+      }
+      user.email = email;
+    }
+    if (defaultCurrency) {
+      user.defaultCurrency = defaultCurrency;
+    }
+    await user.save();
     return res.status(200).json({
-      message: "Login successful",
-      token: result.token,
+      message: "Profile updated successfully",
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        defaultCurrency: user.defaultCurrency,
+      },
     });
   } catch (error) {
-    return res.status(401).json({
-      message: error.message,
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+const deleteacc = async (req, res) => {
+  try {
+    const user = await User.findByPk(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    await user.destroy();
+
+    return res.status(200).json({
+      message: "Account deleted successfully",
     });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
   }
 };
 
 module.exports = {
   register,
   login,
+  getacc,
+  updateacc,
+  deleteacc,
 };

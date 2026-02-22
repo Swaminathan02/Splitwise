@@ -14,9 +14,9 @@ const userRoutes = require("./src/routes/user.routes");
 app.use("/api/users", userRoutes);
 
 const authenticate = require("./src/middleware/auth.middleware");
-app.get("/api/protected", authenticate, (req, res) => {
+app.get("/api/login", authenticate, (req, res) => {
   res.json({
-    message: "You accessed a protected route",
+    message: "You accessed a Login route",
     user: req.user,
   });
 });

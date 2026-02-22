@@ -21,27 +21,35 @@ const createUser = async ({ name, email, password }) => {
 };
 
 const loginUser = async (email, password) => {
-  const user = await User.findOne({ where: { email } });
-  if (!user) {
-    throw new Error("Invalid email or password");
-  }
+  try {
+    // Validate input
+    if (!email || !password) {
+      throw new Error("Email and password are required");
+    }
 
-  const isMatch = await bcrypt.compare(password, user.password);
-  if (!isMatch) {
-    throw new Error("Invalid email or password");
-  }
+    // Check if user exists
+    const user = await User.findOne({ where: { email } });
+    if (!user) {
+      throw new Error("Invalid credentials");
+    }
 
-  const token = jwt.sign(
-    {
-      id: user.id,
-      email: user.email,
-    },
-    process.env.JWT_SECRET,
-    { expiresIn: "1d" },
-  );
-  return {
-    token,
-  };
+    // Compare password
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      throw new Error("Invalid credentials");
+    }
+
+    // Generate token
+    const token = jwt.sign(
+      { id: user.id, email: user.email },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" },
+    );
+
+    return token;
+  } catch (error) {
+    throw error;
+  }
 };
 
 module.exports = {
