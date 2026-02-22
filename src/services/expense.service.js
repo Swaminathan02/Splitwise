@@ -12,6 +12,16 @@ const createExpense = async ({
 }) => {
   const transaction = await sequelize.transaction();
   try {
+    // Validate that participants don't include the creator
+    const creatorInParticipants = participants.some(
+      (p) => p.userId === createdBy,
+    );
+    if (creatorInParticipants) {
+      throw new Error(
+        "Creator cannot be added as a participant in their own expense",
+      );
+    }
+
     const expense = await Expense.create(
       {
         name,
