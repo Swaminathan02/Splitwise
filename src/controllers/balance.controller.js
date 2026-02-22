@@ -15,4 +15,18 @@ const getBalances = async (req, res) => {
   }
 };
 
-module.exports = { getBalances };
+const getOptimizedSettlements = async (req, res) => {
+  try {
+    const settlements = await balanceService.calculateBalances();
+    
+    return res.status(200).json({
+      message: "Optimized settlements retrieved successfully",
+      totalSettlements: settlements.length,
+      settlements,
+    });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+module.exports = { getBalances, getOptimizedSettlements };

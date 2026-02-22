@@ -90,73 +90,90 @@ const getBalancesForUser = async (userId) => {
 };
 
 const calculateBalances = async () => {
-  const expenses = await Expense.findAll({
-    include: [ExpenseParticipant],
-  });
-
-  const users = await User.findAll();
-  const userMap = {};
-
-  users.forEach((user) => {
-    userMap[user.id] = {
-      id: user.id,
-      email: user.email,
-    };
-  });
-
-  const balanceMap = {};
-
-  // Step 1: Calculate net balances
-  for (let expense of expenses) {
-    const payer = expense.createdBy;
-    const total = expense.total_amount;
-
-    balanceMap[payer] = (balanceMap[payer] || 0) + total;
-
-    for (let participant of expense.ExpenseParticipants) {
-      balanceMap[participant.userId] =
-        (balanceMap[participant.userId] || 0) - participant.amountOwed;
-    }
-  }
-
-  const creditors = [];
-  const debtors = [];
-
-  for (let userId in balanceMap) {
-    const amount = balanceMap[userId];
-
-    if (amount > 0) {
-      creditors.push({ userId: Number(userId), amount });
-    } else if (amount < 0) {
-      debtors.push({ userId: Number(userId), amount: Math.abs(amount) });
-    }
-  }
-
-  const settlements = [];
-
-  let i = 0;
-  let j = 0;
-
-  while (i < debtors.length && j < creditors.length) {
-    const debtor = debtors[i];
-    const creditor = creditors[j];
-
-    const settleAmount = Math.min(debtor.amount, creditor.amount);
-
-    settlements.push({
-      from: userMap[debtor.userId],
-      to: userMap[creditor.userId],
-      amount: settleAmount,
+  try {
+    const expenses = await Expense.findAll({
+      include: [ExpenseParticipant],
     });
 
-    debtor.amount -= settleAmount;
-    creditor.amount -= settleAmount;
+    const users = await User.findAll();
+    const userMap = {};
 
-    if (debtor.amount === 0) i++;
-    if (creditor.amount === 0) j++;
+    users.forEach((user) => {
+      userMap[user.id] = {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+      };
+    });
+
+    // Step 1: Calculate net balance for each user
+    const netBalances = {}; // { userId: netAmount }
+    users.forEach((user) => {
+      netBalances[user.id] = 0;
+    });
+
+    for (let expense of expenses) {
+      const payer = expense.createdBy;
+
+      // Calculate only the amount that participants owe back (recoverable amount)
+      const amountRecoverable = expense.ExpenseParticipants.reduce(
+        (sum, p) => sum + parseFloat(p.amountOwed),
+        0
+      );
+
+      // Payer gets credit for what others owe them
+      netBalances[payer] += amountRecoverable;
+
+      // Each participant owes their share
+      for (let participant of expense.ExpenseParticipants) {
+        netBalances[participant.userId] -= parseFloat(participant.amountOwed);
+      }
+    }
+
+    // Step 2: Separate creditors and debtors
+    const creditors = []; // People who should receive money (positive balance)
+    const debtors = []; // People who should pay money (negative balance)
+
+    for (let userId in netBalances) {
+      const amount = netBalances[userId];
+      if (amount > 0) {
+        creditors.push({ userId: Number(userId), amount });
+      } else if (amount < 0) {
+        debtors.push({ userId: Number(userId), amount: Math.abs(amount) });
+      }
+    }
+
+    // Step 3: Match debtors with creditors (greedy algorithm for minimal settlements)
+    const settlements = [];
+    let i = 0;
+    let j = 0;
+
+    while (i < debtors.length && j < creditors.length) {
+      const debtor = debtors[i];
+      const creditor = creditors[j];
+
+      // Calculate settlement amount (minimum of what debtor owes and creditor is owed)
+      const settleAmount = Math.min(debtor.amount, creditor.amount);
+
+      settlements.push({
+        from: userMap[debtor.userId],
+        to: userMap[creditor.userId],
+        amount: settleAmount,
+      });
+
+      // Update remaining amounts
+      debtor.amount -= settleAmount;
+      creditor.amount -= settleAmount;
+
+      // Move to next debtor/creditor if current one is settled
+      if (debtor.amount === 0) i++;
+      if (creditor.amount === 0) j++;
+    }
+
+    return settlements;
+  } catch (error) {
+    throw error;
   }
-
-  return settlements;
 };
 
 module.exports = {
