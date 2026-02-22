@@ -39,3 +39,6 @@ app.get("/api/protected", authenticate, (req, res) => {
     user: req.user,
   });
 });
+
+const expenseRoutes = require("./src/routes/expense.routes");
+app.use("/api/expenses", expenseRoutes);
