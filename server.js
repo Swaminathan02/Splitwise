@@ -27,3 +27,7 @@ const startServer = async () => {
 };
 
 startServer();
+
+app.use(express.json());
+const userRoutes = require("./src/routes/user.routes");
+app.use("/api/users", userRoutes);
