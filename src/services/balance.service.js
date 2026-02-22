@@ -118,7 +118,7 @@ const calculateBalances = async () => {
       // Calculate only the amount that participants owe back (recoverable amount)
       const amountRecoverable = expense.ExpenseParticipants.reduce(
         (sum, p) => sum + parseFloat(p.amountOwed),
-        0
+        0,
       );
 
       // Payer gets credit for what others owe them

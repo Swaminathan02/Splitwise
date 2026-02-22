@@ -18,7 +18,7 @@ const getBalances = async (req, res) => {
 const getOptimizedSettlements = async (req, res) => {
   try {
     const settlements = await balanceService.calculateBalances();
-    
+
     return res.status(200).json({
       message: "Optimized settlements retrieved successfully",
       totalSettlements: settlements.length,
