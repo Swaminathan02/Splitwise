@@ -31,3 +31,11 @@ startServer();
 app.use(express.json());
 const userRoutes = require("./src/routes/user.routes");
 app.use("/api/users", userRoutes);
+
+const authenticate = require("./src/middleware/auth.middleware");
+app.get("/api/protected", authenticate, (req, res) => {
+  res.json({
+    message: "You accessed a protected route",
+    user: req.user,
+  });
+});

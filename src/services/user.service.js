@@ -7,9 +7,8 @@ const createUser = async ({ name, email, password }) => {
   if (existingUser) {
     throw new Error("User already exists with this email");
   }
-  
-  const hashedPassword = await bcrypt.hash(password, 10);
 
+  const hashedPassword = await bcrypt.hash(password, 10);
   const user = await User.create({
     name,
     email,
@@ -18,7 +17,6 @@ const createUser = async ({ name, email, password }) => {
 
   const userData = user.toJSON();
   delete userData.password;
-
   return userData;
 };
 
@@ -39,9 +37,8 @@ const loginUser = async (email, password) => {
       email: user.email,
     },
     process.env.JWT_SECRET,
-    { expiresIn: "1d" }
+    { expiresIn: "1d" },
   );
-
   return {
     token,
   };

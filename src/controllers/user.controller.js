@@ -13,7 +13,6 @@ const register = async (req, res) => {
       message: "User registered successfully",
       user,
     });
-
   } catch (error) {
     return res.status(400).json({
       message: error.message,
@@ -30,7 +29,6 @@ const login = async (req, res) => {
       message: "Login successful",
       token: result.token,
     });
-
   } catch (error) {
     return res.status(401).json({
       message: error.message,
