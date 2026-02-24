@@ -144,6 +144,8 @@ const calculateBalances = async () => {
     }
 
     // Step 3: Match debtors with creditors (greedy algorithm for minimal settlements)
+    creditors.sort((a, b) => b.amount - a.amount); // descending
+    debtors.sort((a, b) => b.amount - a.amount); // descending`
     const settlements = [];
     let i = 0;
     let j = 0;
